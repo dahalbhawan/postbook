@@ -1,0 +1,26 @@
+{% load static %}
+
+<div class="profile-short">
+    <div class="row mb-2 no-gutters">
+        <div class="col-1 col-lg-3">
+            {% if not profile.profile_pic %}
+                <img href="{% url 'user-profile' profile.user.id %}" src="{% static 'network/images/default-user.png' %}" class="post-image rounded-circle" alt="profile-pic">
+            {% else %}
+                <img href="{% url 'user-profile' profile.user.id %}" src="{{ profile.profile_pic.url }}" class="post-image rounded-circle" alt="profile-pic">
+            {% endif %}
+        </div>
+        <div class="col-3 pl-2 pl-lg-0 col-lg-5">
+            <div class="text-primary"><a href="{% url 'user-profile' profile.user.id %}">@{{ profile.user.username }}</a></div>
+            <div class="post-short-sub-text text-muted">{{ user.profile.followers.count }} Followers</div>
+        </div>
+        <div class="col-1">
+            {% if not request.user == profile.user %}
+                {% if not profile in request.user.following_profiles.all %}
+                    <button type="button" class="follow-button btn btn-info btn-sm" data-profile="{{profile.id}}">Follow</button>
+                {% else %}
+                    <button type="button" class="follow-button btn btn-danger btn-sm" data-profile="{{profile.id}}">Unfollow</button>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>

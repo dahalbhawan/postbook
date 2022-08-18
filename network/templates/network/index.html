@@ -1,0 +1,27 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+    {% if not is_following_page %}
+        {% include 'network/create_post.html' %}
+    {% endif %}
+
+    <div class="all-posts">
+        {% for post in posts %}
+            {% include 'network/post.html' %}
+            {% empty %}
+                {% if is_following_page %}
+                    <div class="alert alert-warning">You are not following anyone. Please follow people to start seeing their posts.</div>
+                {% else %}
+                    <div class="alert alert-warning">Seems like there are not posts yet. You can be the first one !</div>
+                {% endif %}
+        {% endfor %}
+    </div>
+
+    {% include 'network/paginator.html' %}
+    
+{% endblock %}
+
+{% block javascript %}
+    
+{% endblock %}

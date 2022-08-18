@@ -1,0 +1,68 @@
+{% load static %}
+
+<div class="modal fade" id="post-dialog-{{post.id}}" tabindex="-1" role="dialog" aria-labelledby="profiles-list-dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 class="modal-title" id="profiles-list-dialog-title">Likers</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        </div>
+        <div id="profile-list-dialog-body" class="modal-body">
+            {% for user in post.likers.all %}
+                {% include 'network/profile_short.html' with profile=user.profile %}
+            {% endfor %}
+        </div>
+        
+    </div>
+    </div>
+</div>
+<div id="post-{{post.id}}" class="post">
+    <div class="row mb-2 align-items-start">
+        <div class="col-1 mt-1">
+            {% if not post.user.profile.profile_pic %}
+                <img src="{% static 'network/images/default-user.png' %}" class="post-image img-fluid rounded-circle" alt="profile-pic">
+            {% else %}
+                <img src="{{ post.user.profile.profile_pic.url }}" class="post-image img-fluid rounded-circle" alt="profile-pic">
+            {% endif %}
+        </div>
+        <div class="col-11 post-content">
+            <div class="post-title mb-2">
+                <div class="post-username"><a href="{% url 'user-profile' post.user.id %}" class="text-info">@{{ post.user.username }}</a></div>
+                <div id="post-date-{{post.id}}" class="post-date text-muted">
+                    {% if post.is_edited %} 
+                        {{ post.last_edited_at }} . Edited
+                    {% else %}
+                        {{ post.created_at }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="post-edit-section-{{post.id}}" class="post-edit-section">
+                <div id="post-text-{{post.id}}" class="post-text mb-2">
+                    {{ post.text }}
+                </div>
+                <div id="post-edit-form-{{post.id}}" class="mb-2" style="display: none">
+                    <div class="post-edit-form-displayed">
+                        <div class="float-right mb-2">
+                            <button id="cancel-edit-{{post.id}}" class="btn btn-sm btn-danger"><i class="fas fa-times-circle"></i></button>
+                            <button id="edit-post-{{post.id}}" class="btn btn-sm btn-info"><i class="fas fa-save"></i></button>
+                        </div>
+                        <textarea rows="3" id="edited-post-{{post.id}}" class="form-control">{{post.text}}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div id="post{{post.id}}_like_number" class="post-like-number mb-2 text-primary" data-post="{{post.id}}" href="#">{{ post.like_count }} Likes</div>
+            <hr class="my-1">
+            <div class="post-buttons row">
+                <div data-post="{{post.id}}" class="post-like col-1 {% if request.user in post.likers.all %}text-danger{% else %}text-info{% endif %}"><i class="fas fa-thumbs-up"></i></div>
+                
+                {% if post.user == request.user %}
+                    <div class="post-edit col-1 text-info" data-post="{{post.id}}"><i class="fas fa-edit"></i></div>
+                {% endif %}
+
+            </div>    
+        </div>
+    </div>    
+</div>

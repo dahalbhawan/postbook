@@ -1,0 +1,169 @@
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        handleLike()
+        handleFollow()
+        handleEditPost()
+        handleLikersDialog()
+
+        $('#profiles-list-modal').on('shown.bs.modal', function (event) {
+            const body = document.querySelector('#modal-body')
+            body.innerHTML = ''
+            const previous_target = event.relatedTarget
+            $('#profiles-list-modal-title').text(previous_target.dataset.type)
+
+            if (previous_target.dataset.type == 'Followers') {
+                body.innerHTML = `
+                    {% for user in profile.followers.all %}
+                        {% include 'network/profile_short.html' with profile=user.profile %}
+                    {% endfor %}
+                `
+            } else if (previous_target.dataset.type == 'Following') {
+                body.innerHTML = `
+                    {% for profile in profile.user.following_profiles.all %}
+                        {% include 'network/profile_short.html' with profile=profile %}
+                    {% endfor %}
+                `
+            } 
+            handleFollow()
+        })
+
+    })
+
+    handleLikersDialog = () => {
+        document.querySelectorAll('.post-like-number').forEach(like => {
+            like.onclick = () => {
+                const post_id = like.dataset.post
+
+                $(`#post-dialog-${post_id}`).modal('show')
+                handleFollow()
+            }
+        })
+    }
+
+    handleLike = () => {
+        //add click event handler to all like buttons
+        document.querySelectorAll('.post-like').forEach((likeButton) => {
+            likeButton.onclick = () => {
+                // get post id from data-post attribute
+                const post_id = likeButton.dataset.post
+                const like_number = document.querySelector(`#post${post_id}_like_number`)
+
+                // make a put request to add/remove the user from post likers
+                fetch("{% url 'like-post' 1 %}".replace("1", post_id.toString()), {
+                    method: 'PUT',
+                })
+                .then(response => {
+                    //check if API call is successful
+                    if (response.ok) {
+                        return response.json()
+                        .then(data => {
+                            // change the color of like button based upon like or dislike information received from API
+                            if (data.like) {
+                                likeButton.classList.remove('text-info')
+                                likeButton.classList.add('text-danger')
+                            } else {
+                                likeButton.classList.add('text-info')
+                                likeButton.classList.remove('text-danger')
+                            }
+                            // update the like count for the post
+                            like_number.innerHTML = `${(data.post.likers).length} Likes`
+                        })
+                    } else {
+                        return response.json()
+                        .then(data => {
+                            const alert = document.querySelector('#alert-message')
+                            alert.innerHTML = `${data.error} <a href="{% url 'login' %}">Login</a>`
+                            alert.className = "alert alert-danger"
+                            alert.style.display = "block"
+                        })
+                    }
+                })
+            }
+        })
+    }
+
+    handleFollow = () => {
+        //add click event handler to all follow buttons 
+        document.querySelectorAll('.follow-button').forEach((followButton) => {
+            followButton.onclick = () => {
+                // get profile id form data-profile attribute
+                const profile_id = followButton.dataset.profile
+                fetch("{% url 'follow-profile' 1 %}".replace("1", profile_id.toString()), {
+                    method: 'PUT'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json()
+                        .then(data => {
+                            window.location.reload()
+                        })
+                    } else {
+                        return response.json()
+                        .then(data => {
+                            const alert = document.querySelector('#alert-message')
+                            alert.innerHTML = `${data.error} <a href="{% url 'login' %}">Login</a>`
+                            alert.className = "alert alert-danger"
+                            alert.style.display = "block"
+                        })
+                    }
+                })
+            }
+        })
+    }
+
+    handleEditPost = () => {
+        document.querySelectorAll('.post-edit').forEach(editPost => {
+            editPost.onclick = () => {
+                const post_id = editPost.dataset.post
+                const post = document.querySelector(`#post-text-${post_id}`)
+                const post_text = post.innerHTML.trim()
+                const edit_form = document.querySelector(`#post-edit-form-${post_id}`)
+                edit_form.style.display = "flex"
+                edit_form.style.flexDirection = "column"
+                post.style.display = "none"
+
+                document.querySelector(`#edit-post-${post_id}`).onclick = () => {
+                    const data = {
+                        'text': document.querySelector(`#edited-post-${post_id}`).value,
+                    }
+                    fetch("{% url 'update-post' 1 %}".replace("1", post_id.toString()), {
+                        method: 'PUT',
+                        body: JSON.stringify(data),
+                    })
+                    .then(response => {
+                        const alert = document.querySelector('#alert-message')
+                        if (response.ok) {
+                            return response.json()
+                            .then(data => {
+                                alert.innerHTML = data.success
+                                alert.className = "alert alert-success"
+                                alert.style.display = "block"
+
+                                edit_form.style.display = "none"
+                                post.style.display = "block"
+
+                                post.innerHTML = data.data.text
+                                
+                                document.querySelector(`#post-date-${post_id}`).innerHTML = `${data.data.last_edited_at} . Edited`
+                            })
+                        } else {
+                            return response.json()
+                            .then(data => {
+                                alert.innerHTML = data.error
+                                alert.className = "alert alert-danger"
+                                alert.style.display = "block"
+                            })
+                        }
+                    })
+                }
+
+                document.querySelector(`#cancel-edit-${post_id}`).onclick = () => {
+                    document.querySelector(`#edited-post-${post_id}`).value = post_text
+                    edit_form.style.display = "none"
+                    post.style.display = "block"
+                }
+            } 
+        })
+    }
+
+</script>
